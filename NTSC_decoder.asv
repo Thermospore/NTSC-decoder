@@ -16,6 +16,7 @@ load("scope recordings\" + recordingName + ".mat")
 % fix scaling
 v = (v-dcOffset)/lowPulse*(-0.286);
 
+% calculate signal specs
 N = length(t);
 T = mean(diff(t));
 
@@ -26,10 +27,27 @@ pulseTiming = zeros(N,1);
 pulseTiming(v > -.2) = 1;
 pulseTiming = [diff(pulseTiming); 0];
 
-% find start of line
-lineStart = min(t(pulseTiming == 1));
+% initialize loop vars
+lineEnd = 0;
+lineNo = 1;
+frame = cell(1000,3);
 
-% find end of line
-lineEnd = min(t(pulseTiming == -1 & t > lineStart+63.556e-6/2));
+% loop through every line in the whole signal
+while (lineNo < 1000)
+    % find start and end of line
+    lineStart = min(t(pulseTiming == 1 & t > lineEnd));
+    lineEnd = min(t(pulseTiming == -1 & t > lineStart));
 
-plot(t,[pulseTiming v], lineStart,0,'x', lineStart+52.9e-6/2,0,'x')
+%     plot(t,[pulseTiming v], lineStart,0,'x', lineEnd,0,'x')
+%     xlim([lineStart lineEnd])
+%     ylim([-0.286 0.936])
+    
+    % grab line voltage
+    lineV = v(t > lineStart & t < lineEnd)';
+    
+    % store line data into frame
+    frame(lineNo,:) = {lineStart lineEnd lineV};
+    lineNo = lineNo + 1;
+end
+
+imagesc(frame(
