@@ -1,0 +1,35 @@
+% using a plain old .m so git can see changes
+clear all
+close all
+
+%% set parameters
+
+recordingName = "2frame_attract"; dcOffset = -0.1330;lowPulse = -0.7527 - dcOffset;
+% recordingName = "2frame_mystery";
+% recordingName = "2frame_n64logo";
+% recordingName = "manyframe_mystery";
+
+%% import data
+
+load("scope recordings\" + recordingName + ".mat")
+
+% fix scaling
+v = (v-dcOffset)/lowPulse*(-0.286);
+
+N = length(t);
+T = mean(diff(t));
+
+%% do stuff
+
+% find blanking pulse timing
+pulseTiming = zeros(N,1);
+pulseTiming(v > -.2) = 1;
+pulseTiming = [diff(pulseTiming); 0];
+
+% find start of line
+lineStart = min(t(pulseTiming == 1));
+
+% find end of line
+lineEnd = min(t(pulseTiming == -1 & t > lineStart+63.556e-6/2));
+
+plot(t,[pulseTiming v], lineStart,0,'x', lineStart+52.9e-6/2,0,'x')
