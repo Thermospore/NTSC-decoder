@@ -100,16 +100,13 @@ while (lineNo < 1000)
     cbPhase = mean(angle(chrc(index)));
     linechr = linechr*exp(j*(pi-cbPhase));
     
-    % extract U/V from chrominance
-    saturation = 1;
-    lineU = saturation*real(linechr);
-    lineV = saturation*imag(linechr);
-    
     % decode to RGB
-    clear RGB
-    RGB(:,:,1) = linelum + 1.13*lineU;
-    RGB(:,:,2) = linelum + -0.575*lineU - 3.94*lineV;
-    RGB(:,:,3) = linelum + 2.03*lineV;
+    h = angle(linechr*exp(j*deg2rad(-110)));
+    h(h<0) = h(h<0)+2*pi;
+    h = h/2/pi;
+    s = abs(linechr)./max(abs(chrc))*1.3;
+    v = linelum./max(lumv)*1.3;
+    RGB = hsv2rgb(h,s,v);
     
     % make line length uniform
     RGB = RGB(:, 1:7350, :);
