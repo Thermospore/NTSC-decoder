@@ -41,6 +41,21 @@ lumVV = lumHH.*VV;
 chrv = real(ifft(ifftshift(chrVV)));
 lumv = real(ifft(ifftshift(lumVV)));
 
+% demodulate chrominance
+fsc = 3579545.45454545;
+
+chrr = chrv.*sin(2*pi*fsc*t);
+chrj = chrv.*cos(2*pi*fsc*t);
+
+L = 100;
+f = [0 fsc*.6 fsc*.8 fsc fsc*1.2 1/(2*T)]*2*T;
+m = [1 1 0 0 0 0];
+h = fir2(L,f,m);
+
+chrc = filter(h,1,flipud(filter(h,1,chrr))) +...
+        j*filter(h,1,flipud(filter(h,1,chrj)));
+chrc = flipud(chrc);
+
 % extract timing info
 pulv = zeros(N,1);
 pulv(v > -.2) = 1;
@@ -62,9 +77,12 @@ while (lineNo < 1000)
         break
     end
 
-%     plot(t,[pulv v], lineStart,0,'x', lineEnd,0,'x')
-%     xlim([lineStart lineEnd])
-%     ylim([-0.286 0.936])
+    if(lineNo == 170)
+        plot(t,[pulv lumv angle(chrc)/2/pi], lineStart,0,'x', lineEnd,0,'x')
+        xlim([lineStart lineEnd])
+        ylim([-0.286 0.936])
+        break
+    end
     
     % grab line voltage
     linev = v(t > lineStart & t < lineEnd)';
