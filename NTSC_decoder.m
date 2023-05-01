@@ -22,10 +22,29 @@ T = mean(diff(t));
 
 %% do stuff
 
-% find blanking pulse timing
-pulseTiming = zeros(N,1);
-pulseTiming(v > -.2) = 1;
-pulseTiming = [diff(pulseTiming); 0];
+% extract luminance and chrominance info
+VV = fftshift(fft(v));
+ff = linspace(-1/T/2,1/T/2,N)';
+
+combPeriod = 15.734265734265e3;
+combHH = -cos(2*pi/combPeriod*ff) /2 + .5;
+
+bandHH = 2*tripuls(ff,2*2e6);
+bandHH = -min(bandHH,1) + 1;
+
+chrHH = combHH.*bandHH;
+lumHH = 1 - chrHH;
+
+chrVV = chrHH.*VV;
+lumVV = lumHH.*VV;
+
+chrv = real(ifft(ifftshift(chrVV)));
+lumv = real(ifft(ifftshift(lumVV)));
+
+% extract timing info
+pulv = zeros(N,1);
+pulv(v > -.2) = 1;
+pulv = [diff(pulv); 0];
 
 % initialize loop vars
 lineEnd = 0;
@@ -35,32 +54,32 @@ frame = cell(1000,3);
 % loop through every line in the whole signal
 while (lineNo < 1000)
     % find start and end of line
-    lineStart = min(t(pulseTiming == 1 & t > lineEnd));
-    lineEnd = min(t(pulseTiming == -1 & t > lineStart));
+    lineStart = min(t(pulv == 1 & t > lineEnd));
+    lineEnd = min(t(pulv == -1 & t > lineStart));
     
     % break at end of recording
     if (isempty(lineStart) | isempty(lineEnd))
         break
     end
 
-%     plot(t,[pulseTiming v], lineStart,0,'x', lineEnd,0,'x')
+%     plot(t,[pulv v], lineStart,0,'x', lineEnd,0,'x')
 %     xlim([lineStart lineEnd])
 %     ylim([-0.286 0.936])
     
     % grab line voltage
-    lineV = v(t > lineStart & t < lineEnd)';
+    linev = v(t > lineStart & t < lineEnd)';
     
     % skip short lines
-    if (length(lineV) < 800)
+    if (length(linev) < 800)
         continue
     end
     
     % trim line voltage
-    lineV = lineV(1:7350);
+    linev = linev(1:7350);
     
     % store line data into frame
-    frame(lineNo,:) = {lineStart lineEnd lineV};
-    lineNo = lineNo + 1;
+    frame(lineNo,:) = {lineStart lineEnd linev};
+    lineNo = lineNo + 1
 end
 
 % display frame
