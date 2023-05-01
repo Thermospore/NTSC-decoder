@@ -77,12 +77,12 @@ while (lineNo < 1000)
         break
     end
 
-    if(lineNo == 170)
-        plot(t,[v pulv lumv abs(chrc) angle(chrc)/pi], lineStart,0,'x', lineEnd,0,'x')
-        xlim([lineStart lineEnd])
-        ylim([-0.286 0.936])
-        break
-    end
+%     if(lineNo == 170)
+%         plot(t,[v pulv lumv abs(chrc) angle(chrc)/pi], lineStart,0,'x', lineEnd,0,'x')
+%         xlim([lineStart lineEnd])
+%         ylim([-0.286 0.936])
+%         break
+%     end
     
     % grab line voltage
     linelum = lumv(t > lineStart & t < lineEnd)';
@@ -99,14 +99,25 @@ while (lineNo < 1000)
     cbPhase = mean(angle(chrc(index)));
     linechr = linechr*exp(j*(pi-cbPhase));
     
-    % trim line voltage
-    linelum = linelum(1:7350);
-    linechr = linechr(1:7350);
+    % extract U/V from chrominance
+    saturation = 1.5;
+    lineU = saturation*real(linechr);
+    lineV = saturation*imag(linechr);
+    
+    % decode to RGB
+    clear RGB
+    RGB(:,:,1) = linelum + 1.13*lineU;
+    RGB(:,:,2) = linelum + -0.575*lineU - 3.94*lineV;
+    RGB(:,:,3) = linelum + 2.03*lineV;
+    
+    % make line length uniform
+    RGB = RGB(:, 1:7350, :);
     
     % store line data into frame
-    frame(lineNo,:) = {lineStart lineEnd linelum};
+    frame(lineNo,:) = {lineStart lineEnd RGB};
     lineNo = lineNo + 1
 end
 
 % display frame
-imagesc(cell2mat(frame(:,3)))
+gain = 1.2;
+imagesc(gain*cell2mat(frame(:,3)))
