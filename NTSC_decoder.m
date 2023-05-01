@@ -44,17 +44,17 @@ lumv = real(ifft(ifftshift(lumVV)));
 % demodulate chrominance
 fsc = 3579545.45454545;
 
-chrr = chrv.*sin(2*pi*fsc*t);
-chrj = chrv.*cos(2*pi*fsc*t);
-
 L = 100;
 f = [0 fsc*.6 fsc*.8 fsc fsc*1.2 1/(2*T)]*2*T;
 m = [1 1 0 0 0 0];
 h = fir2(L,f,m);
 
-chrc = filter(h,1,flipud(filter(h,1,chrr))) +...
-        j*filter(h,1,flipud(filter(h,1,chrj)));
-chrc = flipud(chrc);
+chrr = chrv.*sin(2*pi*fsc*t);
+chrr = filtfilt(h,1,chrr);
+chrj = chrv.*cos(2*pi*fsc*t);
+chrj = filtfilt(h,1,chrj);
+
+chrc = chrr + j*chrj;
 
 % extract timing info
 pulv = zeros(N,1);
