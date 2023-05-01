@@ -78,25 +78,33 @@ while (lineNo < 1000)
     end
 
     if(lineNo == 170)
-        plot(t,[pulv lumv angle(chrc)/2/pi], lineStart,0,'x', lineEnd,0,'x')
+        plot(t,[v pulv lumv abs(chrc) angle(chrc)/pi], lineStart,0,'x', lineEnd,0,'x')
         xlim([lineStart lineEnd])
         ylim([-0.286 0.936])
         break
     end
     
     % grab line voltage
-    linev = v(t > lineStart & t < lineEnd)';
+    linelum = lumv(t > lineStart & t < lineEnd)';
+    linechr = chrc(t > lineStart & t < lineEnd).'; % �v�f�P��!!!
     
     % skip short lines
-    if (length(linev) < 800)
+    if (length(linelum) < 800)
         continue
     end
     
+    % set color burst to 180deg
+    index = (t > lineStart + (5.3-4.7 + 2.5*1/6)*1e-6) &...
+            (t < lineStart + (5.3-4.7 + 2.5*5/6)*1e-6);
+    cbPhase = mean(angle(chrc(index)));
+    linechr = linechr*exp(j*(pi-cbPhase));
+    
     % trim line voltage
-    linev = linev(1:7350);
+    linelum = linelum(1:7350);
+    linechr = linechr(1:7350);
     
     % store line data into frame
-    frame(lineNo,:) = {lineStart lineEnd linev};
+    frame(lineNo,:) = {lineStart lineEnd linelum};
     lineNo = lineNo + 1
 end
 
