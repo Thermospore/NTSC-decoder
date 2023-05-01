@@ -40,6 +40,7 @@ lumVV = lumHH.*VV;
 
 chrv = real(ifft(ifftshift(chrVV)));
 lumv = real(ifft(ifftshift(lumVV)));
+lumv = max(0,lumv); % remove sync pulses
 
 % demodulate chrominance
 fsc = 3579545.45454545;
@@ -77,7 +78,7 @@ while (lineNo < 1000)
         break
     end
 
-%     if(lineNo == 170)
+%     if(lineNo == 164)
 %         plot(t,[v pulv lumv abs(chrc) angle(chrc)/pi], lineStart,0,'x', lineEnd,0,'x')
 %         xlim([lineStart lineEnd])
 %         ylim([-0.286 0.936])
@@ -100,7 +101,7 @@ while (lineNo < 1000)
     linechr = linechr*exp(j*(pi-cbPhase));
     
     % extract U/V from chrominance
-    saturation = 1.5;
+    saturation = 1;
     lineU = saturation*real(linechr);
     lineV = saturation*imag(linechr);
     
@@ -119,5 +120,5 @@ while (lineNo < 1000)
 end
 
 % display frame
-gain = 1.2;
+gain = 1;
 imagesc(gain*cell2mat(frame(:,3)))
