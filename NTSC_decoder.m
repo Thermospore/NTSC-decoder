@@ -86,7 +86,7 @@ while (lineNo < 1000)
     
     % grab line voltage
     linelum = lumv(t > lineStart & t < lineEnd)';
-    linechr = chrc(t > lineStart & t < lineEnd).'; % �v�f�P��!!!
+    linechr = chrc(t > lineStart & t < lineEnd).'; % DON'T FORGET DOT!!!
     
     % skip short lines
     if (length(linelum) < 800)
