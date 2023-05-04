@@ -16,15 +16,25 @@ load("scope recordings\" + recordingName + ".mat")
 % fix scaling
 v = (v-dcOffset)/lowPulse*(-0.286);
 
-% calculate signal specs
+% calculate time/freq vectors
 N = length(t);
 T = mean(diff(t));
+NT = N*T;
+
+F = 1/NT;
+NF = 1/T;
+
+f = transpose(0:F:NF-F);
+
+tt = fftshift(t);
+tt(tt > tt(end)) = tt(tt > tt(end)) - NT;
+ff = fftshift(f);
+ff(ff > ff(end)) = ff(ff > ff(end)) - NF;
 
 %% do stuff
 
 % extract luminance and chrominance info
 VV = fftshift(fft(v));
-ff = linspace(-1/T/2,1/T/2,N)';
 
 combPeriod = 15.734265734265e3;
 combHH = -cos(2*pi/combPeriod*ff) /2 + .5;
