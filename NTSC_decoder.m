@@ -31,6 +31,60 @@ tt(tt > tt(end)) = tt(tt > tt(end)) - NT;
 ff = fftshift(f);
 ff(ff > ff(end)) = ff(ff > ff(end)) - NF;
 
+%% define NTSC constants
+% source: https://web.archive.org/web/20170614080536/http://www.radios-tv.co.uk/Pembers/World-TV-Standards/Line-Standards.html
+
+% 525 Lines
+% everything is wrt 50% amplitude points
+% rise times are 10% to 90%
+
+% the z is just so they don't clutter up workspace
+% (probably a sleeker way to do this...)
+
+% Amplitudes (volts)
+zMaximum_excursion_with_chroma = 936e-3;
+zPeak_white_level = 714e-3;
+zPositive_peaks_of_burst = 143e-3;
+zBlack_level = 0; % 54 mV outside Japan
+zBlanking_level = 0;
+zNegative_peaks_of_burst = -143e-3;
+zMinimum_excursion_with_chroma = -164e-3;
+zSync_tip_level = -286e-3;
+
+% Horizontal Timing (seconds unless specified)
+zLine_frequency = (2.25/143)*1e6; % Hz (Mono: 15.750kHz)
+zTotal_line_period = 63.556e-6; % (Mono: 63.492É s)
+zActive_line_period = 52.9e-6;
+zLine_blanking_period = 10.7e-6;
+zLine_blanking_rise_time = 140e-9;
+zFront_porch = 1.5e-6;
+zLine_sync_pulse_width = 4.7e-6;
+zLine_sync_rise_time = 140e-9;
+zTime_reference_point_to_burst_start = 5.3e-6; % (19 cycles)
+zSubcarrier_burst_phase_wrt_time_reference_point = 0; % degrees
+zSubcarrier_burst_duration = 2.5e-6; % (9 cycles)
+zBurst_envelope_rise_time = 300e-9;
+zTime_reference_point_to_line_blanking_end = 9.2e-6;
+
+% Vertical Timing
+zField_frequency = 60/1.001; % Hz (Mono: 60Hz)
+zTotal_field_period = 16.6833e-3; % sec (Mono: 16.667ms)
+zTotal_frame_period = 33.3667e-3; % sec (Mono: 33.333ms)
+zActive_field_period = 242.5; % lines
+zField_blanking_period = 20; % lines (N lines plus line blanking)
+zPre_equalising_duration = 3; % lines (6 narrow pulses)
+zPre_equalising_pulse_width = 2.30e-6; % sec
+zEqualising_pulse_rise_time = 140e-9; % sec
+zField_sync_duration = 3; % lines (6 broad pulses)
+zField_sync_broad_pulse_width = 27.1e-6; % sec
+zField_serration_pulse_width = 4.70e-6; % sec
+zField_pulse_rise_time = 140e-9; % sec
+zPost_equalising_duration = 3; % lines (6 narrow pulses)
+zPost_equalising_pulse_width = 2.30e-6; % sec
+
+% Color subcarrier
+f_SC = (315/88)*1e6;
+
 %% do stuff
 
 % extract luminance and chrominance info
