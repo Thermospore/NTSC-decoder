@@ -9,28 +9,6 @@ recordingName = "2frame_attract"; dcOffset = -0.1330;lowPulse = -0.7527 - dcOffs
 % recordingName = "2frame_n64logo";
 % recordingName = "manyframe_mystery";
 
-%% import data
-
-load("scope recordings\" + recordingName + ".mat")
-
-% fix scaling
-v = (v-dcOffset)/lowPulse*(-0.286);
-
-% calculate time/freq vectors
-N = length(t);
-T = mean(diff(t));
-NT = N*T;
-
-F = 1/NT;
-NF = 1/T;
-
-f = transpose(0:F:NF-F);
-
-tt = fftshift(t);
-tt(tt > tt(end)) = tt(tt > tt(end)) - NT;
-ff = fftshift(f);
-ff(ff > ff(end)) = ff(ff > ff(end)) - NF;
-
 %% define NTSC constants
 % source: https://web.archive.org/web/20170614080536/http://www.radios-tv.co.uk/Pembers/World-TV-Standards/Line-Standards.html
 
@@ -85,13 +63,34 @@ zPost_equalising_pulse_width = 2.30e-6; % sec
 % Color subcarrier
 f_SC = (315/88)*1e6;
 
+%% import data
+
+load("scope recordings\" + recordingName + ".mat")
+
+% fix scaling
+v = (v-dcOffset)/lowPulse*zSync_tip_level;
+
+% calculate time/freq vectors
+N = length(t);
+T = mean(diff(t));
+NT = N*T;
+
+F = 1/NT;
+NF = 1/T;
+
+f = transpose(0:F:NF-F);
+
+tt = fftshift(t);
+tt(tt > tt(end)) = tt(tt > tt(end)) - NT;
+ff = fftshift(f);
+ff(ff > ff(end)) = ff(ff > ff(end)) - NF;
+
 %% do stuff
 
 % extract luminance and chrominance info
 VV = fftshift(fft(v));
 
-combPeriod = 15.734265734265e3;
-combHH = -cos(2*pi/combPeriod*ff) /2 + .5;
+combHH = -cos(2*pi/zLine_frequency*ff) /2 + .5;
 
 bandHH = 2*tripuls(ff,2*2e6);
 bandHH = -min(bandHH,1) + 1;
@@ -107,16 +106,14 @@ lumv = real(ifft(ifftshift(lumVV)));
 lumv = max(0,lumv); % remove sync pulses
 
 % demodulate chrominance
-fsc = 3579545.45454545;
-
 L = 100;
-f = [0 fsc*.6 fsc*.8 fsc fsc*1.2 1/(2*T)]*2*T;
+f = [0 f_SC*.6 f_SC*.8 f_SC f_SC*1.2 1/(2*T)]*2*T;
 m = [1 1 0 0 0 0];
 h = fir2(L,f,m);
 
-chrr = chrv.*sin(2*pi*fsc*t);
+chrr = chrv.*sin(2*pi*f_SC*t);
 chrr = filtfilt(h,1,chrr);
-chrj = chrv.*cos(2*pi*fsc*t);
+chrj = chrv.*cos(2*pi*f_SC*t);
 chrj = filtfilt(h,1,chrj);
 
 chrc = chrr + j*chrj;
