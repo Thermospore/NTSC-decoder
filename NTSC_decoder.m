@@ -4,6 +4,9 @@ close all
 
 %% set parameters
 
+sat = 1.3; % saturation
+bri = 1.3; % brightness
+
 recordingName = "2frame_attract"; dcOffset = -0.1330;lowPulse = -0.7527 - dcOffset;
 % recordingName = "2frame_mystery";
 % recordingName = "2frame_n64logo";
@@ -117,19 +120,24 @@ chrj = chrv.*cos(2*pi*f_SC*t);
 chrj = filtfilt(h,1,chrj);
 
 chrc = chrr + j*chrj;
+chrc = chrc/max(abs(chrc))*max(abs(chrv)); % (lazily and sloppily) restore amplitude scale
 
 % extract timing info
+% consider applying LPF to v first, to prevent extra pulses due to noise?
+% but I think they get ignored anyway, when we toss out short lines
 pulv = zeros(N,1);
-pulv(v > -.2) = 1;
+pulv(v > (zMinimum_excursion_with_chroma + zSync_tip_level)/2) = 1;
 pulv = [diff(pulv); 0];
 
 % initialize loop vars
+arbitraryMaxLoopLength = 1000; % make this less jank
 lineEnd = 0;
 lineNo = 1;
-frame = cell(1000,3);
+frame = cell(arbitraryMaxLoopLength,3);
 
 % loop through every line in the whole signal
-while (lineNo < 1000)
+% go back and pull out things that only need to be calc'd once
+while (lineNo < arbitraryMaxLoopLength)
     % find start and end of line
     lineStart = min(t(pulv == 1 & t > lineEnd));
     lineEnd = min(t(pulv == -1 & t > lineStart));
@@ -150,27 +158,34 @@ while (lineNo < 1000)
     linelum = lumv(t > lineStart & t < lineEnd)';
     linechr = chrc(t > lineStart & t < lineEnd).'; % DON'T FORGET DOT!!!
     
-    % skip short lines
-    if (length(linelum) < 800)
+    % skip non-image lines
+    if (length(linelum)*T < .95*(zTotal_line_period - zLine_sync_pulse_width))
         continue
     end
     
     % set color burst to 180deg
-    index = (t > lineStart + (5.3-4.7 + 2.5*1/6)*1e-6) &...
-            (t < lineStart + (5.3-4.7 + 2.5*5/6)*1e-6);
+    index = (t > lineStart + zTime_reference_point_to_burst_start-zLine_sync_pulse_width + 1/6*zSubcarrier_burst_duration) &...
+            (t < lineStart + zTime_reference_point_to_burst_start-zLine_sync_pulse_width + 5/6*zSubcarrier_burst_duration);
     cbPhase = mean(angle(chrc(index)));
     linechr = linechr*exp(j*(pi-cbPhase));
     
     % decode to RGB
-    h = angle(linechr*exp(j*deg2rad(-110)));
-    h(h<0) = h(h<0)+2*pi;
-    h = h/2/pi;
-    s = abs(linechr)./max(abs(chrc))*1.3;
-    v = linelum./max(lumv)*1.3;
-    RGB = hsv2rgb(h,s,v);
+    hsv_h = angle(linechr*exp(j*deg2rad(-110))); % HSV and NTSC have 110deg hue offset
+    hsv_h(hsv_h<0) = hsv_h(hsv_h<0)+2*pi;
+    hsv_h = hsv_h/2/pi;
+    
+    hsv_s = abs(linechr)/(zMaximum_excursion_with_chroma-zPeak_white_level);
+    hsv_s = hsv_s*sat;
+    hsv_s = min(1,hsv_s);
+    
+    hsv_v = linelum/zPeak_white_level;
+    hsv_v = hsv_v*bri;
+    hsv_v = min(1,hsv_v);
+    
+    RGB = hsv2rgb(hsv_h,hsv_s,hsv_v);
     
     % make line length uniform
-    RGB = RGB(:, 1:7350, :);
+    RGB = RGB(:, 1:floor((zTotal_line_period-zLine_sync_pulse_width - .05*zFront_porch)/T), :);
     
     % store line data into frame
     frame(lineNo,:) = {lineStart lineEnd RGB};
@@ -178,5 +193,4 @@ while (lineNo < 1000)
 end
 
 % display frame
-gain = 1;
-imagesc(gain*cell2mat(frame(:,3)))
+imagesc(cell2mat(frame(:,3)))
