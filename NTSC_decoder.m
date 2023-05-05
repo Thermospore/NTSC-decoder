@@ -6,6 +6,8 @@ close all
 
 sat = 1.3; % saturation
 bri = 1.3; % brightness
+outputScale = 3; % gif output res is multiplied by this factor
+speedScale = .1; % gif framerate is multiplied by this factor
 
 recordingName = "2frame_attract"; dcOffset = -0.1330;lowPulse = -0.7527 - dcOffset;
 % recordingName = "2frame_mystery";
@@ -63,8 +65,9 @@ zField_pulse_rise_time = 140e-9; % sec
 zPost_equalising_duration = 3; % lines (6 narrow pulses)
 zPost_equalising_pulse_width = 2.30e-6; % sec
 
-% Color subcarrier
-f_SC = (315/88)*1e6;
+% misc
+linesPerFrame = 260; % (# full length scanlines in 240p)
+f_SC = (315/88)*1e6; % Color subcarrier
 
 %% import data
 
@@ -129,15 +132,15 @@ pulv = zeros(N,1);
 pulv(v > (zMinimum_excursion_with_chroma + zSync_tip_level)/2) = 1;
 pulv = [diff(pulv); 0];
 
+% find start of first frame
+
 % initialize loop vars
-arbitraryMaxLoopLength = 1000; % make this less jank
 lineEnd = 0;
 lineNo = 1;
-frame = cell(arbitraryMaxLoopLength,3);
 
 % loop through every line in the whole signal
 % go back and pull out things that only need to be calc'd once
-while (lineNo < arbitraryMaxLoopLength)
+while (1 < 2)
     % find start and end of line
     lineStart = min(t(pulv == 1 & t > lineEnd));
     lineEnd = min(t(pulv == -1 & t > lineStart));
@@ -188,9 +191,31 @@ while (lineNo < arbitraryMaxLoopLength)
     RGB = RGB(:, 1:floor((zTotal_line_period-zLine_sync_pulse_width - .05*zFront_porch)/T), :);
     
     % store line data into frame
-    frame(lineNo,:) = {lineStart lineEnd RGB};
-    lineNo = lineNo + 1
+    frame(mod(lineNo-1,linesPerFrame)+1, :, :, ceil(lineNo/linesPerFrame)) = RGB;
+    
+    lineNo = lineNo + 1 % change this to a total prog % or something
 end
 
-% display frame
-imagesc(cell2mat(frame(:,3)))
+% imagesc preview
+for i = 1:size(frame,4)
+    frameAppend((i-1)*linesPerFrame+1:i*linesPerFrame,:,:) = frame(:,:,:,i);
+end
+imagesc(frameAppend)
+
+% clear final frame, if incomplete
+if (mod(lineNo,linesPerFrame) ~= 1)
+    frame = frame(:,:,:,1:end-1);
+end
+
+% gif output
+filename = "output.gif";
+for idx = 1:size(frame,4)
+    outputRes = [linesPerFrame*outputScale round(linesPerFrame/3*4*outputScale)]; % somewhat arbitrary aspect...
+    outputFrame = imresize(frame(:,:,:,idx),outputRes,"nearest");
+    [A,map] = rgb2ind(outputFrame,256);
+    if idx == 1
+        imwrite(A,map,filename,"gif","LoopCount",Inf,"DelayTime",1/zField_frequency*speedScale);
+    else
+        imwrite(A,map,filename,"gif","WriteMode","append","DelayTime",1/zField_frequency*speedScale);
+    end
+end
