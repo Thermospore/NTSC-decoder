@@ -9,8 +9,7 @@ bri = 1.3; % brightness
 outputScale = 3; % gif output res is multiplied by this factor
 speedScale = .15; % gif framerate is multiplied by this factor
 
-% need to implement autoscaling...
-% can use that vsync pulse finder code I wrote
+% note: need to implement autoscaling... can use that vsync pulse finder code I wrote
 recordingName = "2frame_attract"; dcOffset = -0.1330;lowPulse = -0.7527 - dcOffset;
 % recordingName = "2frame_mystery";
 % recordingName = "2frame_n64logo";
@@ -93,7 +92,7 @@ tt(tt > tt(end)) = tt(tt > tt(end)) - NT;
 ff = fftshift(f);
 ff(ff > ff(end)) = ff(ff > ff(end)) - NF;
 
-%% do stuff
+%% extract signals
 
 % extract luminance and chrominance info
 VV = fftshift(fft(v));
@@ -128,14 +127,18 @@ chrc = chrr + j*chrj;
 chrc = chrc/max(abs(chrc))*max(abs(chrv)); % (lazily and sloppily) restore amplitude scale
 
 % extract timing info
-% consider applying LPF to v first, to prevent extra pulses due to noise?
-% but I think they get ignored anyway, when we toss out short lines
+% note: consider applying LPF to v first, to prevent extra pulses due to noise?
+%       but I think they get ignored anyway, when we toss out short lines?
+%       wait that would throw off vsync pulse detection tho, if an extra
+%       pulse was mixed in there...
 pulv = zeros(N,1);
 pulv(v > (zMinimum_excursion_with_chroma + zSync_tip_level)/2) = 1;
 pulv = [diff(pulv); 0];
 
+%% main render loop
+
 % loop through every line in the whole signal
-% go back and pull out things that only need to be calc'd once
+% note: go back and pull out things that only need to be calc'd once
 lineNo = 1;
 lineNo_firstFullFrame = -1;
 lineEnd = 0;
@@ -213,6 +216,8 @@ while (1 < 2)
     lineNo = lineNo + 1;
     totalProgress = [lineNo lineEnd/max(t)]
 end
+
+%% final outputs
 
 % display big long frame
 imagesc(longFrame)
