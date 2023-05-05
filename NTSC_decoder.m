@@ -218,7 +218,7 @@ end
 imagesc(longFrame)
 
 % slice into complete frames for gif
-for i = 1:floor(size(longFrame,1)/linesPerFrame)
+for i = 1:floor((size(longFrame,1)-lineNo_firstFullFrame)/linesPerFrame)
     frame(:,:,:,i) = longFrame(lineNo_firstFullFrame + (i-1)*linesPerFrame + (0:linesPerFrame-1),:,:);
 end
 
