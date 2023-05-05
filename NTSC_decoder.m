@@ -193,7 +193,8 @@ while (1 < 2)
     % store line data into frame
     frame(mod(lineNo-1,linesPerFrame)+1, :, :, ceil(lineNo/linesPerFrame)) = RGB;
     
-    lineNo = lineNo + 1 % change this to a total prog % or something
+    lineNo = lineNo + 1;
+    totalProgress = lineEnd/max(t)
 end
 
 % imagesc preview
