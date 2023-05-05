@@ -132,14 +132,29 @@ pulv = zeros(N,1);
 pulv(v > (zMinimum_excursion_with_chroma + zSync_tip_level)/2) = 1;
 pulv = [diff(pulv); 0];
 
-% find start of first frame
-
-% initialize loop vars
+% skip up to start of first full frame
+%       honestly, I should go back to just dumping all of the lines in one
+%       big column, then trim the start and end after...
 lineEnd = 0;
-lineNo = 1;
+lineLength = [nan nan nan];
+while (1 < 2)
+    % find start and end of line
+    lineStart = min(t(pulv == 1 & t > lineEnd));
+    lineEnd = min(t(pulv == -1 & t > lineStart));
+    
+    % update history of last 3 line lengths
+    lineLength = [lineLength(2:3) lineEnd-lineStart];
+    
+    % break if they are all close to zField_serration_pulse_width
+    if (lineLength > .95*zField_serration_pulse_width &...
+        lineLength < 1.05*zField_serration_pulse_width)
+        break
+    end
+end
 
 % loop through every line in the whole signal
 % go back and pull out things that only need to be calc'd once
+lineNo = 1;
 while (1 < 2)
     % find start and end of line
     lineStart = min(t(pulv == 1 & t > lineEnd));
