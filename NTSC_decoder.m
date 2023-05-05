@@ -10,14 +10,14 @@ outputScale = 3; % gif output res is multiplied by this factor
 speedScale = .15; % gif framerate is multiplied by this factor
 
 % note: need to implement autoscaling... can use that vsync pulse finder code I wrote
-recordingName = "2frame_attract"; dcOffset = -0.1330;lowPulse = -0.7527 - dcOffset;
-% recordingName = "2frame_mystery";
-% recordingName = "2frame_n64logo";
-% recordingName = "manyframe_mystery";
-% recordingName = "10frame_mystery";
-% recordingName = "10frame_ps1startup";
-% recordingName = "10frame_ps2startup";
-% recordingName = "2frame_f0menu";
+recordingName = "2frame_attract"; dcOffset = -0.1329; lowPulse = -0.7525;
+% recordingName = "2frame_mystery"; dcOffset = -0.1918; lowPulse = -0.8077;
+% recordingName = "2frame_n64logo"; dcOffset = -0.1796; lowPulse = -0.7944;
+% recordingName = "manyframe_mystery"; dcOffset = -0.1896; lowPulse = -0.8068;
+% recordingName = "10frame_mystery"; dcOffset = -0.0826; lowPulse = -0.6682;
+% recordingName = "10frame_ps1startup"; dcOffset = 0.0308; lowPulse = -0.5623;
+% recordingName = "10frame_ps2startup"; dcOffset = 0.0666; lowPulse = -0.5283;
+% recordingName = "2frame_f0menu"; % (rf ch 3)
 
 %% define NTSC constants
 % source: https://web.archive.org/web/20170614080536/http://www.radios-tv.co.uk/Pembers/World-TV-Standards/Line-Standards.html
@@ -79,7 +79,7 @@ f_SC = (315/88)*1e6; % Color subcarrier
 load("scope recordings\" + recordingName + ".mat")
 
 % fix scaling
-v = (v-dcOffset)/lowPulse*zSync_tip_level;
+v = (v-dcOffset)/(lowPulse-dcOffset)*zSync_tip_level;
 
 % calculate time/freq vectors
 N = length(t);
