@@ -134,29 +134,12 @@ pulv = zeros(N,1);
 pulv(v > (zMinimum_excursion_with_chroma + zSync_tip_level)/2) = 1;
 pulv = [diff(pulv); 0];
 
-% skip up to start of first full frame
-%       honestly, I should go back to just dumping all of the lines in one
-%       big column, then trim the start and end after...
-lineEnd = 0;
-lineLength = [nan nan nan];
-while (1 < 2)
-    % find start and end of line
-    lineStart = min(t(pulv == 1 & t > lineEnd));
-    lineEnd = min(t(pulv == -1 & t > lineStart));
-    
-    % update history of last 3 line lengths
-    lineLength = [lineLength(2:3) lineEnd-lineStart];
-    
-    % break if they are all close to zField_serration_pulse_width
-    if (lineLength > .95*zField_serration_pulse_width &...
-        lineLength < 1.05*zField_serration_pulse_width)
-        break
-    end
-end
-
 % loop through every line in the whole signal
 % go back and pull out things that only need to be calc'd once
 lineNo = 1;
+lineNo_firstFullFrame = -1;
+lineEnd = 0;
+lineLengthHist = [nan nan nan];
 while (1 < 2)
     % find start and end of line
     lineStart = min(t(pulv == 1 & t > lineEnd));
@@ -174,14 +157,30 @@ while (1 < 2)
 %         break
 %     end
     
+    % check for start of first full frame, if we haven't found it already
+    lineLength = lineEnd - lineStart;
+    if (lineNo_firstFullFrame == -1)
+        
+        % update history of last 3 line lengths
+        lineLengthHist = [lineLengthHist(2:3) lineLength];
+
+        % if they are all basically equal to zField_serration_pulse_width,
+        % then we are at the start of the frame
+        if (lineLengthHist > .95*zField_serration_pulse_width &...
+            lineLengthHist < 1.05*zField_serration_pulse_width)
+        
+            lineNo_firstFullFrame = lineNo;
+        end
+    end
+    
+    % skip non-image lines
+    if (lineLength < .95*(zTotal_line_period - zLine_sync_pulse_width))
+        continue
+    end
+    
     % grab line voltage
     linelum = lumv(t > lineStart & t < lineEnd)';
     linechr = chrc(t > lineStart & t < lineEnd).'; % DON'T FORGET DOT!!!
-    
-    % skip non-image lines
-    if (length(linelum)*T < .95*(zTotal_line_period - zLine_sync_pulse_width))
-        continue
-    end
     
     % set color burst to 180deg
     index = (t > lineStart + zTime_reference_point_to_burst_start-zLine_sync_pulse_width + 1/6*zSubcarrier_burst_duration) &...
@@ -207,22 +206,20 @@ while (1 < 2)
     % make line length uniform
     RGB = RGB(:, 1:floor((zTotal_line_period-zLine_sync_pulse_width - .05*zFront_porch)/T), :);
     
-    % store line data into frame
-    frame(mod(lineNo-1,linesPerFrame)+1, :, :, ceil(lineNo/linesPerFrame)) = RGB;
+    % store line data into big long frame
+    longFrame(lineNo, :, :) = RGB;
     
+    % update lineNo and display progress
     lineNo = lineNo + 1;
     totalProgress = [lineNo lineEnd/max(t)]
 end
 
-% imagesc preview
-for i = 1:size(frame,4)
-    frameAppend((i-1)*linesPerFrame+1:i*linesPerFrame,:,:) = frame(:,:,:,i);
-end
-imagesc(frameAppend)
+% display big long frame
+imagesc(longFrame)
 
-% clear final frame, if incomplete
-if (mod(lineNo,linesPerFrame) ~= 1)
-    frame = frame(:,:,:,1:end-1);
+% slice into complete frames for gif
+for i = 1:floor(size(longFrame,1)/linesPerFrame)
+    frame(:,:,:,i) = longFrame(lineNo_firstFullFrame + (i-1)*linesPerFrame + (0:linesPerFrame-1),:,:);
 end
 
 % gif output
@@ -237,3 +234,5 @@ for idx = 1:size(frame,4)
         imwrite(A,map,filename,"gif","WriteMode","append","DelayTime",1/zField_frequency*speedScale);
     end
 end
+
+winopen output.gif
