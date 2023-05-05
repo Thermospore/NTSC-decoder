@@ -9,6 +9,8 @@ bri = 1.3; % brightness
 outputScale = 3; % gif output res is multiplied by this factor
 speedScale = .1; % gif framerate is multiplied by this factor
 
+% need to implement autoscaling...
+% can use that vsync pulse finder code I wrote
 recordingName = "2frame_attract"; dcOffset = -0.1330;lowPulse = -0.7527 - dcOffset;
 % recordingName = "2frame_mystery";
 % recordingName = "2frame_n64logo";
@@ -209,7 +211,7 @@ while (1 < 2)
     frame(mod(lineNo-1,linesPerFrame)+1, :, :, ceil(lineNo/linesPerFrame)) = RGB;
     
     lineNo = lineNo + 1;
-    totalProgress = lineEnd/max(t)
+    totalProgress = [lineNo lineEnd/max(t)]
 end
 
 % imagesc preview
