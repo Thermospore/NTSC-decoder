@@ -7,7 +7,7 @@ close all
 sat = 1.3; % saturation
 bri = 1.3; % brightness
 outputScale = 3; % gif output res is multiplied by this factor
-speedScale = .1; % gif framerate is multiplied by this factor
+speedScale = .15; % gif framerate is multiplied by this factor
 
 % need to implement autoscaling...
 % can use that vsync pulse finder code I wrote
@@ -229,9 +229,9 @@ for idx = 1:size(frame,4)
     outputFrame = imresize(frame(:,:,:,idx),outputRes,"nearest");
     [A,map] = rgb2ind(outputFrame,256);
     if idx == 1
-        imwrite(A,map,filename,"gif","LoopCount",Inf,"DelayTime",1/zField_frequency*speedScale);
+        imwrite(A,map,filename,"gif","LoopCount",Inf,"DelayTime",1/zField_frequency/speedScale);
     else
-        imwrite(A,map,filename,"gif","WriteMode","append","DelayTime",1/zField_frequency*speedScale);
+        imwrite(A,map,filename,"gif","WriteMode","append","DelayTime",1/zField_frequency/speedScale);
     end
 end
 
