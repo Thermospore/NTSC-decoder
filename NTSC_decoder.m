@@ -14,6 +14,10 @@ recordingName = "2frame_attract"; dcOffset = -0.1330;lowPulse = -0.7527 - dcOffs
 % recordingName = "2frame_mystery";
 % recordingName = "2frame_n64logo";
 % recordingName = "manyframe_mystery";
+% recordingName = "10frame_mystery";
+% recordingName = "10frame_ps1startup";
+% recordingName = "10frame_ps2startup";
+% recordingName = "2frame_f0menu";
 
 %% define NTSC constants
 % source: https://web.archive.org/web/20170614080536/http://www.radios-tv.co.uk/Pembers/World-TV-Standards/Line-Standards.html
@@ -139,6 +143,7 @@ pulv = [diff(pulv); 0];
 
 % loop through every line in the whole signal
 % note: go back and pull out things that only need to be calc'd once
+%       also spam some tic tocs to find bottlenecks
 lineNo = 1;
 lineNo_firstFullFrame = -1;
 lineEnd = 0;
