@@ -138,6 +138,7 @@ chrj = filtfilt(h,1,chrj);
 
 chrc = chrr + j*chrj;
 chrc = chrc/max(abs(chrc))*max(abs(chrv)); % (lazily and sloppily) restore amplitude scale
+% note: maybe normalize to expected amplitude of color burst?
 
 % extract timing info
 % note: consider applying LPF to v first, to prevent extra pulses due to noise?
@@ -159,8 +160,6 @@ lineSegs = [lineStarts(1:length(lineEnds)) lineEnds];
 disp("running main render loop")
 
 % loop through every line in the whole signal
-% note: go back and pull out things that only need to be calc'd once
-%       also spam some tic tocs to find bottlenecks
 lineNo = 1;
 lineNo_firstFullFrame = -1;
 lineEnd = 0;
