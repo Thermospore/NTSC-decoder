@@ -24,6 +24,7 @@ recordingName = "2frame_attract"; dcOffset = -0.1329; lowPulse = -0.7525;
 % recordingName = "10frame_c2intro_take2"; dcOffset = 0.0025; lowPulse = -0.5917;
 % recordingName = "10frame_c2menu"; dcOffset = -0.1612; lowPulse = -0.7528;
 % recordingName = "10frame_75load_c2menu"; dcOffset = -0.2764; lowPulse = -0.5712;
+% recordingName = "manyframe_75load_mystery"; dcOffset = -0.0515; lowPulse = -0.3446;
 
 %% define NTSC constants
 % source: https://web.archive.org/web/20170614080536/http://www.radios-tv.co.uk/Pembers/World-TV-Standards/Line-Standards.html
