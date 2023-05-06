@@ -1,4 +1,3 @@
-% NOTE: add in some progress display outputs
 % using a plain old .m so git can see changes
 clear all
 close all
@@ -83,6 +82,7 @@ linesPerFrame = 260; % (# full length scanlines in 240p)
 f_SC = (315/88)*1e6; % Color subcarrier freq
 
 %% import data
+disp("importing data")
 
 load("scope recordings\" + recordingName + ".mat")
 
@@ -104,7 +104,8 @@ tt(tt > tt(end)) = tt(tt > tt(end)) - NT;
 ff = fftshift(f);
 ff(ff > ff(end)) = ff(ff > ff(end)) - NF;
 
-%% extract signals
+%% separate signals
+disp("separating signals")
 
 % extract luminance and chrominance info
 VV = fftshift(fft(v));
@@ -155,6 +156,7 @@ end
 lineSegs = [lineStarts(1:length(lineEnds)) lineEnds];
 
 %% main render loop
+disp("running main render loop")
 
 % loop through every line in the whole signal
 % note: go back and pull out things that only need to be calc'd once
@@ -231,6 +233,7 @@ for i = 1:length(lineSegs)
 end
 
 %% final outputs
+disp("slicing final outputs")
 
 % trim excess from pre-allocation
 longFrame = longFrame(1:lineNo-1,:,:);
