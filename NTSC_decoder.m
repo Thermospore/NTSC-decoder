@@ -9,7 +9,8 @@ bri = 1.3; % brightness
 outputScale = 3; % gif output res is multiplied by this factor
 speedScale = .15; % gif framerate is multiplied by this factor
 
-% note: need to implement autoscaling... can use that vsync pulse finder code I wrote
+% note: maybe implement autoscaling... can use that vsync pulse finder code I wrote
+% note: also get all the new recordings working lol
 recordingName = "2frame_attract"; dcOffset = -0.1329; lowPulse = -0.7525;
 % recordingName = "2frame_mystery"; dcOffset = -0.1918; lowPulse = -0.8077;
 % recordingName = "2frame_n64logo"; dcOffset = -0.1796; lowPulse = -0.7944;
@@ -20,7 +21,9 @@ recordingName = "2frame_attract"; dcOffset = -0.1329; lowPulse = -0.7525;
 % recordingName = "2frame_f0menu"; % (rf ch 3)
 % recordingName = "1frame_f0jump"; % (rf ch 3)
 % recordingName = "10frame_c2intro"; dcOffset = 0.0131; lowPulse = -0.5793;
+% recordingName = "10frame_c2intro_take2"; dcOffset = 0.0025; lowPulse = -0.5917;
 % recordingName = "10frame_c2menu"; dcOffset = -0.1612; lowPulse = -0.7528;
+% recordingName = "10frame_75load_c2menu"; dcOffset = -0.2764; lowPulse = -0.5712;
 
 %% define NTSC constants
 % source: https://web.archive.org/web/20170614080536/http://www.radios-tv.co.uk/Pembers/World-TV-Standards/Line-Standards.html
