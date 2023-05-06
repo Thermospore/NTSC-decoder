@@ -79,7 +79,7 @@ zPost_equalising_pulse_width = 2.30e-6; % sec
 
 % misc
 linesPerFrame = 260; % (# full length scanlines in 240p)
-f_SC = (315/88)*1e6; % Color subcarrier
+f_SC = (315/88)*1e6; % Color subcarrier freq
 
 %% import data
 
@@ -225,8 +225,8 @@ while (1 < 2)
     longFrame(lineNo, :, :) = RGB;
     
     % update lineNo and display progress
-    lineNo = lineNo + 1;
-    totalProgress = [lineNo lineEnd/max(t)]
+    lineNo = lineNo + 1
+    totalProgress = lineEnd/max(t)
 end
 
 %% final outputs
