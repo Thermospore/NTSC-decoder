@@ -1,3 +1,4 @@
+% NOTE: add in some progress display outputs
 % using a plain old .m so git can see changes
 clear all
 close all
@@ -146,6 +147,13 @@ pulv = zeros(N,1);
 pulv(v > (zMinimum_excursion_with_chroma + zSync_tip_level)/2) = 1;
 pulv = [diff(pulv); 0];
 
+lineStarts = t(pulv == 1);
+lineEnds = t(pulv == -1);
+if (lineEnds(1) < lineStarts(1))
+    lineEnds = lineEnds(2:end);
+end
+lineSegs = [lineStarts(1:length(lineEnds)) lineEnds];
+
 %% main render loop
 
 % loop through every line in the whole signal
@@ -155,16 +163,14 @@ lineNo = 1;
 lineNo_firstFullFrame = -1;
 lineEnd = 0;
 lineLengthHist = [nan nan nan];
-while (1 < 2)
-    % find start and end of line
-    lineStart = min(t(pulv == 1 & t > lineEnd));
-    lineEnd = min(t(pulv == -1 & t > lineStart));
+lineN = floor((zTotal_line_period-zLine_sync_pulse_width - .05*zFront_porch)/T);
+longFrame = zeros(length(lineSegs),lineN,3); % pre-allocate (guess length)
+for i = 1:length(lineSegs)
     
-    % break at end of recording
-    if (isempty(lineStart) | isempty(lineEnd))
-        break
-    end
-
+    % get start and end of line
+    lineStart = lineSegs(i,1);
+    lineEnd = lineSegs(i,2);
+    
 %     if(lineNo == 164)
 %         plot(t,[v pulv lumv abs(chrc) angle(chrc)/pi], lineStart,0,'x', lineEnd,0,'x')
 %         xlim([lineStart lineEnd])
@@ -194,16 +200,17 @@ while (1 < 2)
     end
     
     % grab line voltage
-    linelum = lumv(t > lineStart & t < lineEnd)';
-    linechr = chrc(t > lineStart & t < lineEnd).'; % DON'T FORGET DOT!!!
+    index = ceil(lineStart/T):ceil(lineStart/T)+lineN-1;
+    linelum = lumv(index)';
+    linechr = chrc(index).'; % DON'T FORGET DOT!!!
     
     % set color burst to 180deg
-    index = (t > lineStart + zTime_reference_point_to_burst_start-zLine_sync_pulse_width + 1/6*zSubcarrier_burst_duration) &...
-            (t < lineStart + zTime_reference_point_to_burst_start-zLine_sync_pulse_width + 5/6*zSubcarrier_burst_duration);
-    cbPhase = mean(angle(chrc(index)));
+    index = ceil((zTime_reference_point_to_burst_start-zLine_sync_pulse_width + 1/6*zSubcarrier_burst_duration)/T):...
+            floor((zTime_reference_point_to_burst_start-zLine_sync_pulse_width + 5/6*zSubcarrier_burst_duration)/T);
+    cbPhase = mean(angle(linechr(index)));
     linechr = linechr*exp(j*(pi-cbPhase));
     
-    % decode to RGB
+    % convert to HSV
     hsv_h = angle(linechr*exp(j*deg2rad(-110))); % HSV and NTSC have 110deg hue offset
     hsv_h(hsv_h<0) = hsv_h(hsv_h<0)+2*pi;
     hsv_h = hsv_h/2/pi;
@@ -216,20 +223,20 @@ while (1 < 2)
     hsv_v = hsv_v*bri;
     hsv_v = min(1,hsv_v);
     
-    RGB = hsv2rgb(hsv_h,hsv_s,hsv_v);
-    
-    % make line length uniform
-    RGB = RGB(:, 1:floor((zTotal_line_period-zLine_sync_pulse_width - .05*zFront_porch)/T), :);
-    
     % store line data into big long frame
-    longFrame(lineNo, :, :) = RGB;
+    longFrame(lineNo, :, :) = cat(3,hsv_h,hsv_s,hsv_v);
     
-    % update lineNo and display progress
-    lineNo = lineNo + 1
-    totalProgress = lineEnd/max(t)
+    % update lineNo
+    lineNo = lineNo + 1;
 end
 
 %% final outputs
+
+% trim excess from pre-allocation
+longFrame = longFrame(1:lineNo-1,:,:);
+
+% convert from HSV to RGB
+longFrame = hsv2rgb(longFrame);
 
 % display big long frame
 imagesc(longFrame)
