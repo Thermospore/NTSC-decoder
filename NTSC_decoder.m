@@ -209,7 +209,7 @@ for i = 1:length(lineSegs)
     % set color burst to 180deg
     index = ceil((zTime_reference_point_to_burst_start-zLine_sync_pulse_width + 1/6*zSubcarrier_burst_duration)/T):...
             floor((zTime_reference_point_to_burst_start-zLine_sync_pulse_width + 5/6*zSubcarrier_burst_duration)/T);
-    cbPhase = mean(angle(linechr(index)));
+    cbPhase = mean(unwrap(angle(linechr(index))));
     linechr = linechr*exp(j*(pi-cbPhase));
     
     % convert to HSV
