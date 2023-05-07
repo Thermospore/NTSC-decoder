@@ -146,7 +146,7 @@ chrc = chrc/max(abs(chrc))*max(abs(chrv)); % (lazily and sloppily) restore ampli
 %       wait that would throw off vsync pulse detection tho, if an extra
 %       pulse was mixed in there...
 pulv = zeros(N,1);
-pulv(v > (zMinimum_excursion_with_chroma + zSync_tip_level)/2) = 1;
+pulv(filtfilt(h,1,v) > zSync_tip_level/2) = 1;
 pulv = [diff(pulv); 0];
 
 lineStarts = t(pulv == 1);
