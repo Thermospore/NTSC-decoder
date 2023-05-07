@@ -2,19 +2,22 @@
 clear all
 close all
 
+% note: semi-temp fix. accounts for how n64 doesn't have half width vsync pulses...
+bonusLines = 0;
+
 %% set parameters
 
 sat = 1.3; % saturation
 bri = 1.3; % brightness
 outputScale = 3; % gif output res is multiplied by this factor
-speedScale = .15; % gif framerate is multiplied by this factor
+speedScale = .5; % gif framerate is multiplied by this factor
 
 % note: maybe implement autoscaling... can use that vsync pulse finder code I wrote
 % note: also get all the new recordings working lol
-recordingName = "2frame_attract"; dcOffset = -0.1329; lowPulse = -0.7525;
-% recordingName = "2frame_mystery"; dcOffset = -0.1918; lowPulse = -0.8077;
-% recordingName = "2frame_n64logo"; dcOffset = -0.1796; lowPulse = -0.7944;
-% recordingName = "manyframe_mystery"; dcOffset = -0.1896; lowPulse = -0.8068;
+% recordingName = "2frame_attract"; dcOffset = -0.1329; lowPulse = -0.7525; bonusLines = 6;
+% recordingName = "2frame_mystery"; dcOffset = -0.1918; lowPulse = -0.8077; bonusLines = 6;
+% recordingName = "2frame_n64logo"; dcOffset = -0.1796; lowPulse = -0.7944; bonusLines = 6;
+% recordingName = "manyframe_mystery"; dcOffset = -0.1896; lowPulse = -0.8068; bonusLines = 6;
 % recordingName = "10frame_mystery"; dcOffset = -0.0826; lowPulse = -0.6682;
 % recordingName = "10frame_ps1startup"; dcOffset = 0.0308; lowPulse = -0.5623;
 % recordingName = "10frame_ps2startup"; dcOffset = 0.0666; lowPulse = -0.5283;
@@ -24,7 +27,7 @@ recordingName = "2frame_attract"; dcOffset = -0.1329; lowPulse = -0.7525;
 % recordingName = "10frame_c2intro_take2"; dcOffset = 0.0025; lowPulse = -0.5917;
 % recordingName = "10frame_c2menu"; dcOffset = -0.1612; lowPulse = -0.7528;
 % recordingName = "10frame_75load_c2menu"; dcOffset = -0.2764; lowPulse = -0.5712;
-% recordingName = "manyframe_75load_mystery"; dcOffset = -0.0515; lowPulse = -0.3446;
+recordingName = "manyframe_75load_mystery"; dcOffset = -0.0515; lowPulse = -0.3446;
 
 %% define NTSC constants
 % source: https://web.archive.org/web/20170614080536/http://www.radios-tv.co.uk/Pembers/World-TV-Standards/Line-Standards.html
@@ -78,7 +81,7 @@ zPost_equalising_duration = 3; % lines (6 narrow pulses)
 zPost_equalising_pulse_width = 2.30e-6; % sec
 
 % misc
-linesPerFrame = 260; % (# full length scanlines in 240p)
+linesPerFrame = 254+bonusLines; % (# full length scanlines in 240p)
 f_SC = (315/88)*1e6; % Color subcarrier freq
 
 %% import data
@@ -204,6 +207,10 @@ for i = 1:length(lineSegs)
     index = ceil(lineStart/T):ceil(lineStart/T)+lineN-1;
     linelum = lumv(index)';
     linechr = chrc(index).'; % DON'T FORGET DOT!!!
+    
+    % note: fix line voltage dc coupling?
+    %       and remove sync pulse here instead? (ie slice off <0 stuff)
+    %       US vs JP black level?
     
     % set color burst to 180deg
     index = ceil((zTime_reference_point_to_burst_start-zLine_sync_pulse_width + 1/6*zSubcarrier_burst_duration)/T):...
