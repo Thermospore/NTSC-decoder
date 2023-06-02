@@ -2,8 +2,8 @@
 clear all
 close all
 
-% note: semi-temp fix. accounts for how n64 doesn't have half width vsync pulses...
-bonusLines = 0;
+bonusLines = 0; % note: semi-temp fix. accounts for how n64 doesn't have half width vsync pulses...
+rfCH = -1; % used to set rf demod (-1 = no demod)
 
 %% set parameters
 
@@ -12,22 +12,27 @@ bri = 1.3; % brightness
 outputScale = 3; % gif output res is multiplied by this factor
 speedScale = .5; % gif framerate is multiplied by this factor
 
-% note: maybe implement autoscaling... can use that vsync pulse finder code I wrote
-% note: also get all the new recordings working lol
+% uncomment a recording to view it
+
+% note: figure out why the ps1/2 recordings are so noisy...
+%       not sure if it's specific to the 10frame preset or the ps2
+% note: add a pure noise mode :)
+% note: implement interlaced video
+
 % recordingName = "2frame_attract"; dcOffset = -0.1329; lowPulse = -0.7525; bonusLines = 6;
 % recordingName = "2frame_mystery"; dcOffset = -0.1918; lowPulse = -0.8077; bonusLines = 6;
 % recordingName = "2frame_n64logo"; dcOffset = -0.1796; lowPulse = -0.7944; bonusLines = 6;
 % recordingName = "manyframe_mystery"; dcOffset = -0.1896; lowPulse = -0.8068; bonusLines = 6;
-% recordingName = "10frame_mystery"; dcOffset = -0.0826; lowPulse = -0.6682;
+recordingName = "10frame_mystery"; dcOffset = -0.0826; lowPulse = -0.6682;
 % recordingName = "10frame_ps1startup"; dcOffset = 0.0308; lowPulse = -0.5623;
 % recordingName = "10frame_ps2startup"; dcOffset = 0.0666; lowPulse = -0.5283;
-% recordingName = "2frame_f0menu"; % (rf ch 3)
-% recordingName = "1frame_f0jump"; % (rf ch 3)
+% recordingName = "2frame_f0menu"; rfCH = 3; % this one is non functional
+% recordingName = "1frame_f0jump"; dcOffset = 1.0950e-3; lowPulse = 1.3347e-3; rfCH = 3;
 % recordingName = "10frame_c2intro"; dcOffset = 0.0131; lowPulse = -0.5793;
 % recordingName = "10frame_c2intro_take2"; dcOffset = 0.0025; lowPulse = -0.5917;
 % recordingName = "10frame_c2menu"; dcOffset = -0.1612; lowPulse = -0.7528;
 % recordingName = "10frame_75load_c2menu"; dcOffset = -0.2764; lowPulse = -0.5712;
-recordingName = "manyframe_75load_mystery"; dcOffset = -0.0515; lowPulse = -0.3446;
+% recordingName = "manyframe_75load_mystery"; dcOffset = -0.0515; lowPulse = -0.3446;
 
 %% define NTSC constants
 % source: https://web.archive.org/web/20170614080536/http://www.radios-tv.co.uk/Pembers/World-TV-Standards/Line-Standards.html
@@ -89,9 +94,6 @@ disp("importing data")
 
 load("scope recordings\" + recordingName + ".mat")
 
-% fix scaling
-v = (v-dcOffset)/(lowPulse-dcOffset)*zSync_tip_level;
-
 % calculate time/freq vectors
 N = length(t);
 T = mean(diff(t));
@@ -106,6 +108,18 @@ tt = fftshift(t);
 tt(tt > tt(end)) = tt(tt > tt(end)) - NT;
 ff = fftshift(f);
 ff(ff > ff(end)) = ff(ff > ff(end)) - NF;
+
+% lazy/hardcoded rf demod
+if (rfCH ~= -1)
+    VV = fftshift(fft(v));
+    VV = fftshift([VV(5225047:end); VV(1:5225047-1)]);
+    VV(abs(ff)> 4.4e6) = 0;
+    v = abs(ifft(ifftshift(VV)));
+end
+
+% fix scaling
+% note: maybe implement autoscaling... can use that vsync pulse finder code I wrote
+v = (v-dcOffset)/(lowPulse-dcOffset)*zSync_tip_level;
 
 %% separate signals
 disp("separating signals")
@@ -149,7 +163,12 @@ chrc = chrc/max(abs(chrc))*max(abs(chrv)); % (lazily and sloppily) restore ampli
 %       wait that would throw off vsync pulse detection tho, if an extra
 %       pulse was mixed in there...
 pulv = zeros(N,1);
-pulv(filtfilt(h,1,v) > zSync_tip_level/2) = 1;
+if (rfCH == -1)
+    pulv(filtfilt(h,1,v) > zSync_tip_level/2) = 1;
+else
+    % extra noise filtering for rf demod case
+    pulv(13*filtfilt(h,1,filtfilt(h,1,v)) > zSync_tip_level/2) = 1;
+end
 pulv = [diff(pulv); 0];
 
 lineStarts = t(pulv == 1);
