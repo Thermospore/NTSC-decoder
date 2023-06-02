@@ -287,4 +287,4 @@ for idx = 1:size(frame,4)
     end
 end
 
-winopen output.gif
+winopen(filename)
